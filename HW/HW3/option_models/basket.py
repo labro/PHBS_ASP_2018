@@ -7,7 +7,7 @@ Created on Tue Sep 19 22:56:58 2017
 import numpy as np
 import scipy.stats as ss
 from option_models.bsm import bsm_price
-from option_models.normal import normal_formula
+from option_models.normal import normal_price
 
 
 def basket_check_args(spot, vol, corr_m, weights):
@@ -111,13 +111,13 @@ def basket_price_norm_analytic(
     vol = vol * spot
     div_fac = np.exp(-texp * divr)
     disc_fac = np.exp(-texp * intr)
-    forward = spot / disc_fac * div_fac
+    forward = spot / disc_fac * div_fac @ weights[:, np.newaxis]
     cov_m = vol * cor_m * vol[:, None]
 
     basket_vol = np.sqrt(weights @ cov_m @ weights[:, np.newaxis])
 
-    price = normal_formula(strike, spot, basket_vol, texp,
-                           intr=0.0, divr=0.0, cp_sign=1)
+    price = normal_price(strike, forward, basket_vol, texp,
+                           intr, cp_sign)
 
     return price
 
