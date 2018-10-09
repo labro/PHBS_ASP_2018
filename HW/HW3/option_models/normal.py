@@ -44,26 +44,48 @@ class NormalModel:
     def price(self, strike, spot, texp, cp_sign=1):
         return normal_formula(strike, spot, self.vol, texp, intr=self.intr, divr=self.divr, cp_sign=cp_sign)
 
+    def _calculate_d(self, strike, spot, vol, texp, intr=0.0, divr=0.0):
+
+        div_fac = np.exp(-texp * divr)
+        disc_fac = np.exp(-texp * intr)
+        forward = spot / disc_fac * disc_fac
+
+        vol_std = np.fmax(vol * np.sqrt(texp), 1.0e-16)
+
+        d = (forward - spot) / vol_std
+
+        return d
+
     def delta(self, strike, spot, vol, texp, intr=0.0, divr=0.0, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d = self._calculate_d(strike, spot, vol, texp, intr, divr)
+
+        return cp_sign * ss.norm.cdf(cp_sign * d)
 
     def vega(self, strike, spot, vol, texp, intr=0.0, divr=0.0, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d = self._calculate_d(strike, spot, vol, texp, intr, divr)
+
+        return np.sqrt(texp) * ss.norm.pdf(d)
 
     def gamma(self, strike, spot, vol, texp, intr=0.0, divr=0.0, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d = self._calculate_d(str, spot, vol, texp, intr, divr)
+
+        return ss.norm.pdf(d) / vol / np.sqrt(texp)
 
     def impvol(self, price, strike, spot, texp, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        def iv_func(_vol): return \
+            normal_formula(strike, spot, _vol, texp, self.intr,
+                           self.divr, cp_sign) - price
+        vol = sopt.brentq(iv_func, 0, 10)
+        return vol

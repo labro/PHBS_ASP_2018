@@ -35,24 +35,41 @@ class BsmModel:
     
     def price(self, strike, spot, texp, cp_sign=1):
         return bsm_price(strike, spot, self.vol, texp, intr=self.intr, divr=self.divr, cp_sign=cp_sign)
+
+    def _calculate_d(self, strike, spot, vol, texp, intr=0.0, divr=0.0):
+        div_fac = np.exp(-texp*divr)
+        disc_fac = np.exp(-texp*intr)
+        forward = spot / disc_fac * div_fac
+        vol_std = vol*np.sqrt(texp)
+        d1 = np.log(forward/strike)/vol_std + 0.5*vol_std
+        d2 = d1 - vol_std
+
+        return d1, d2
     
     def delta(self, strike, spot, texp, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d1, _ = self._calculate_d(strike, spot, self.vol, texp, self.intr, self.divr)
+        if cp_sign:
+            return np.exp(-self.divr * texp) * ss.norm.cdf(d1) 
+        else:
+            return np.exp(-self.divr * texp) * (ss.norm.cdf(d1) - 1)
 
-    def vega(self, strike, spot, vol, texp, cp_sign=1):
+    def vega(self, strike, spot, texp, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d1, _ = self._calculate_d(strike, spot, self.vol, texp, self.intr, self.divr)
+        return  spot * np.exp(-self.divr * texp) * np.sqrt(texp)* ss.norm.pdf(d1)
 
-    def gamma(self, strike, spot, vol, texp, cp_sign=1):
+    def gamma(self, strike, spot, texp, cp_sign=1):
         ''' 
         <-- PUT your implementation here
         '''
-        return 0
+        d1, _ = self._calculate_d(strike, spot, self.vol, texp, self.intr, self.divr)
+
+        return np.exp(-self.divr * texp) / spot / self.vol / np.sqrt(texp) * ss.norm.pdf(d1)
 
     def impvol(self, price, strike, spot, texp, cp_sign=1):
         iv_func = lambda _vol: \
