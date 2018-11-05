@@ -146,7 +146,7 @@ class ModelHagan:
             
             return bsm_vols
             
-        solution = sopt.root(FOC,np.zeros_like(price_or_vol3))
+        solution = sopt.root(FOC, np.zeros(3))
         solution_x = solution.x
 
         sigma = np.exp(solution_x[0])
@@ -220,7 +220,7 @@ class ModelNormalHagan:
             
             return norm_vols
             
-        solution = sopt.root(FOC, np.zeros_like(price_or_vol3))
+        solution = sopt.root(FOC, np.zeros(3))
         solution_x = solution.x
 
         sigma = np.sqrt(solution_x[0]**2)
